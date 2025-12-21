@@ -3,10 +3,13 @@ package com.socialmedia.fakemedium.controller;
 import com.socialmedia.fakemedium.dto.CreateArticleRequest;
 import com.socialmedia.fakemedium.entity.Article;
 import com.socialmedia.fakemedium.repository.ArticleRepository;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/articles")
@@ -30,5 +33,23 @@ public class ArticleController {
 
         Article saved = articleRepository.save(a);
         return ResponseEntity.ok(saved);
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Void> delete(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        String email = auth.getName();
+
+        Article article = articleRepository
+                .findByIdAndAuthorEmail(id, email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND)
+                );
+
+        articleRepository.delete(article);
+        return ResponseEntity.noContent().build(); // 204
     }
 }
