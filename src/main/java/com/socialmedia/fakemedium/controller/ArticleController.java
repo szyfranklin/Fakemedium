@@ -52,4 +52,26 @@ public class ArticleController {
         articleRepository.delete(article);
         return ResponseEntity.noContent().build(); // 204
     }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity<Article> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateArticleRequest req,
+            Authentication auth
+    ) {
+        String email = auth.getName();
+
+        Article article = articleRepository
+                .findByIdAndAuthorEmail(id, email)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND)
+                );
+
+        article.setTitle(req.title);
+        article.setContent(req.content);
+
+        Article updated = articleRepository.save(article);
+        return ResponseEntity.ok(updated);
+    }
 }
